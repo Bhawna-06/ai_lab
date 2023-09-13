@@ -1,0 +1,86 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cmath>
+#include <cstring>
+
+using namespace std;
+
+const int INF = 1e9;
+
+// Define room dimensions
+const int ROWS = 5;
+const int COLS = 5;
+
+// Define the monkey's starting position and banana position
+pair<int, int> monkeyStart = {0, 0};
+pair<int, int> bananaPosition = {4, 4};
+
+// Define the room layout (0 represents open space, 1 represents obstacles)
+int room[ROWS][COLS] = {
+    {0, 0, 0, 1, 0},
+    {1, 1, 0, 1, 0},
+    {0, 0, 0, 0, 0},
+    {0, 1, 1, 1, 1},
+    {0, 0, 0, 0, 0}
+};
+
+// Define possible movements (up, down, left, right)
+int dr[] = {-1, 1, 0, 0};
+int dc[] = {0, 0, -1, 1};
+
+bool isValid(int x, int y) {
+    return (x >= 0 && x < ROWS && y >= 0 && y < COLS && room[x][y] == 0);
+}
+
+int heuristic(pair<int, int> current) {
+    return abs(current.first - bananaPosition.first) + abs(current.second - bananaPosition.second);
+}
+
+int aoStar() {
+    priority_queue<pair<int, pair<int, int>>> pq;
+
+    pq.push({0, monkeyStart});
+
+    int dist[ROWS][COLS];
+    memset(dist, INF, sizeof(dist));
+
+    dist[monkeyStart.first][monkeyStart.second] = 0;
+
+    while (!pq.empty()) {
+        pair<int, int> currentPos = pq.top().second;
+        int currentDist = -pq.top().first;
+        pq.pop();
+
+        if (currentPos == bananaPosition) {
+            // Monkey has reached the banana
+            return currentDist;
+        }
+
+        for (int i = 0; i < 4; i++) {
+            int newX = currentPos.first + dr[i];
+            int newY = currentPos.second + dc[i];
+
+            if (isValid(newX, newY) && currentDist + 1 < dist[newX][newY]) {
+                dist[newX][newY] = currentDist + 1;
+                int priority = currentDist + 1 + heuristic({newX, newY});
+                pq.push({-priority, {newX, newY}});
+            }
+        }
+    }
+
+    // If the monkey can't reach the banana
+    return INF;
+}
+
+int main() {
+    int steps = aoStar();
+
+    if (steps == INF) {
+        cout << "Monkey cannot reach the banana!" << endl;
+    } else {
+        cout << "Monkey can reach the banana in " << steps << " steps." << endl;
+    }
+
+    return 0;
+}
