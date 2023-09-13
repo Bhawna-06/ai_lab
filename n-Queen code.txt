@@ -1,0 +1,105 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cmath>
+#include <algorithm> // Add this line
+
+using namespace std;
+
+// Define possible movements (up, down, left, right)
+int dx[] = {-1, 1, 0, 0};
+int dy[] = {0, 0, -1, 1};
+
+// A* algorithm to find the shortest path
+vector<pair<int, int>> astar(vector<vector<int>>& grid, pair<int, int> start, pair<int, int> goal) {
+    int rows = grid.size();
+    int cols = grid[0].size();
+
+    // Initialize the closed set (visited nodes)
+    vector<vector<bool>> closed(rows, vector<bool>(cols, false));
+
+    // Create the priority queue for open nodes
+    priority_queue<pair<int, pair<int, int>>> open;
+
+    // Initialize parent pointers to reconstruct the path
+    vector<vector<pair<int, int>>> parent(rows, vector<pair<int, int>>(cols, {-1, -1}));
+
+    // Add the start node to the open set
+    open.push({0, start});
+
+    while (!open.empty()) {
+        // Get the node with the lowest f value from the open set
+        pair<int, pair<int, int>> current = open.top();
+        open.pop();
+
+        int x = current.second.first;
+        int y = current.second.second;
+
+        // Check if we reached the goal
+        if (x == goal.first && y == goal.second) {
+            // Reconstruct the path
+            vector<pair<int, int>> path;
+            while (x != -1 && y != -1) {
+                path.push_back({x, y});
+                pair<int, int> next = parent[x][y];
+                x = next.first;
+                y = next.second;
+            }
+            reverse(path.begin(), path.end());
+            return path;
+        }
+
+        // Mark the current node as visited
+        closed[x][y] = true;
+
+        // Explore neighboring nodes
+        for (int i = 0; i < 4; ++i) {
+            int newX = x + dx[i];
+            int newY = y + dy[i];
+
+            // Check if the neighbor is within bounds and not visited
+            if (newX >= 0 && newX < rows && newY >= 0 && newY < cols && !closed[newX][newY] && grid[newX][newY] != 1) {
+                int newG = current.first + 1; // Assuming a cost of 1 for each step
+                int newH = abs(newX - goal.first) + abs(newY - goal.second); // Manhattan distance as heuristic
+                int newF = newG + newH;
+
+                // Check if the neighbor is not in the open set or has a lower f value
+                if (parent[newX][newY] == make_pair(-1, -1) || newF < open.top().first) {
+                    open.push({newF, {newX, newY}});
+                    parent[newX][newY] = {x, y};
+                }
+            }
+        }
+    }
+
+    // If no path is found, return an empty path
+    return vector<pair<int, int>>();
+}
+
+int main() {
+    // Example grid with 0s as open spaces and 1s as obstacles
+    vector<vector<int>> grid = {
+        {0, 0, 0, 0, 0},
+        {1, 1, 0, 1, 1},
+        {0, 0, 0, 0, 0},
+        {0, 1, 0, 0, 1},
+        {0, 0, 0, 0, 0}
+    };
+
+    pair<int, int> start = {0, 0};
+    pair<int, int> goal = {4, 4};
+
+    vector<pair<int, int>> path = astar(grid, start, goal);
+
+    if (!path.empty()) {
+        cout << "Path found: ";
+        for (const auto& p : path) {
+            cout << "(" << p.first << ", " << p.second << ") ";
+        }
+        cout << endl;
+    } else {
+        cout << "No path found." << endl;
+    }
+
+    return 0;
+}
